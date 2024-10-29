@@ -1,8 +1,11 @@
 package org.example;
-import org.json.JSONObject;
+
 import org.json.JSONArray;
 import org.json.JSONException;
+import org.json.JSONObject;
+
 import javax.swing.*;
+import javax.swing.text.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -12,7 +15,8 @@ import java.io.FileReader;
 import java.io.IOException;
 
 public class JsonFormatterApp extends JFrame {
-    private JTextArea jsonTextArea;
+
+    private JTextPane jsonTextPane;
     private JButton formatButton;
     private JButton loadFileButton;
 
@@ -22,10 +26,9 @@ public class JsonFormatterApp extends JFrame {
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setLayout(new BorderLayout());
 
-        jsonTextArea = new JTextArea();
-        jsonTextArea.setLineWrap(true);
-        jsonTextArea.setWrapStyleWord(true);
-        JScrollPane scrollPane = new JScrollPane(jsonTextArea);
+        jsonTextPane = new JTextPane();
+        jsonTextPane.setEditable(true);
+        JScrollPane scrollPane = new JScrollPane(jsonTextPane);
 
         formatButton = new JButton("Indentar JSON");
         loadFileButton = new JButton("Cargar archivo JSON");
@@ -36,6 +39,7 @@ public class JsonFormatterApp extends JFrame {
 
         add(scrollPane, BorderLayout.CENTER);
         add(buttonPanel, BorderLayout.SOUTH);
+
         loadFileButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -47,10 +51,11 @@ public class JsonFormatterApp extends JFrame {
                 }
             }
         });
+
         formatButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                formatJson();
+                formatAndColorJson();
             }
         });
     }
@@ -62,14 +67,14 @@ public class JsonFormatterApp extends JFrame {
             while ((line = br.readLine()) != null) {
                 contentBuilder.append(line);
             }
-            jsonTextArea.setText(contentBuilder.toString());
+            jsonTextPane.setText(contentBuilder.toString());
         } catch (IOException e) {
             JOptionPane.showMessageDialog(this, "Error al leer el archivo: " + e.getMessage());
         }
     }
 
-    private void formatJson() {
-        String inputJson = jsonTextArea.getText().trim();
+    private void formatAndColorJson() {
+        String inputJson = jsonTextPane.getText().trim();
         try {
             String formattedJson;
             if (inputJson.startsWith("{")) {
@@ -81,9 +86,37 @@ public class JsonFormatterApp extends JFrame {
             } else {
                 throw new JSONException("Formato JSON inválido");
             }
-            jsonTextArea.setText(formattedJson);
+            applyColoredText(formattedJson);
         } catch (JSONException e) {
             JOptionPane.showMessageDialog(this, "JSON no válido: " + e.getMessage());
+        }
+    }
+
+    private void applyColoredText(String jsonText) {
+        StyledDocument doc = jsonTextPane.getStyledDocument();
+        StyleContext styleContext = StyleContext.getDefaultStyleContext();
+        AttributeSet keyStyle = styleContext.addAttribute(SimpleAttributeSet.EMPTY, StyleConstants.Foreground, Color.BLUE);
+        AttributeSet textValueStyle = styleContext.addAttribute(SimpleAttributeSet.EMPTY, StyleConstants.Foreground, new Color(34, 139, 34));
+        AttributeSet numberValueStyle = styleContext.addAttribute(SimpleAttributeSet.EMPTY, StyleConstants.Foreground, Color.ORANGE);
+        AttributeSet defaultStyle = styleContext.addAttribute(SimpleAttributeSet.EMPTY, StyleConstants.Foreground, Color.BLACK);
+        jsonTextPane.setText("");
+
+        String[] tokens = jsonText.split("(?<=[:{},\\[\\]])|(?=[:{},\\[\\]])");
+
+        for (String token : tokens) {
+            try {
+                if (token.trim().startsWith("\"") && token.trim().endsWith("\":")) {
+                    doc.insertString(doc.getLength(), token, keyStyle);
+                } else if (token.trim().startsWith("\"") && token.trim().endsWith("\"")) {
+                    doc.insertString(doc.getLength(), token, textValueStyle);
+                } else if (token.trim().matches("-?\\d+(\\.\\d+)?")) {
+                    doc.insertString(doc.getLength(), token, numberValueStyle);
+                } else {
+                    doc.insertString(doc.getLength(), token, defaultStyle);
+                }
+            } catch (BadLocationException e) {
+                e.printStackTrace();
+            }
         }
     }
 
