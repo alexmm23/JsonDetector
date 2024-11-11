@@ -5,6 +5,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import javax.swing.text.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -24,16 +25,29 @@ public class JsonFormatterApp extends JFrame {
         setTitle("JSON Formatter");
         setSize(600, 400);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
-        setLayout(new BorderLayout());
+        setLocationRelativeTo(null);
 
+        // Aplicar un Look-and-Feel moderno
+        try {
+            UIManager.setLookAndFeel(new javax.swing.plaf.nimbus.NimbusLookAndFeel());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        setLayout(new BorderLayout());
         jsonTextPane = new JTextPane();
         jsonTextPane.setEditable(true);
-        JScrollPane scrollPane = new JScrollPane(jsonTextPane);
+        jsonTextPane.setFont(new Font("Consolas", Font.PLAIN, 14)); // Cambiar fuente
+        jsonTextPane.setBorder(new EmptyBorder(10, 10, 10, 10));
 
-        formatButton = new JButton("Indentar JSON");
-        loadFileButton = new JButton("Cargar archivo JSON");
+        JScrollPane scrollPane = new JScrollPane(jsonTextPane);
+        scrollPane.setBorder(BorderFactory.createLineBorder(new Color(128, 128, 128), 1));
+
+        formatButton = createStyledButton("Indentar JSON", new Color(85, 170, 255), Color.WHITE);
+        loadFileButton = createStyledButton("Cargar archivo JSON", new Color(85, 170, 255), Color.WHITE);
 
         JPanel buttonPanel = new JPanel();
+        buttonPanel.setBackground(new Color(240, 240, 240));
         buttonPanel.add(loadFileButton);
         buttonPanel.add(formatButton);
 
@@ -58,6 +72,16 @@ public class JsonFormatterApp extends JFrame {
                 formatAndColorJson();
             }
         });
+    }
+
+    private JButton createStyledButton(String text, Color bgColor, Color fgColor) {
+        JButton button = new JButton(text);
+        button.setBackground(bgColor);
+        button.setForeground(fgColor);
+        button.setFont(new Font("Arial", Font.BOLD, 14));
+        button.setFocusPainted(false);
+        button.setBorder(BorderFactory.createEmptyBorder(5, 15, 5, 15));
+        return button;
     }
 
     private void loadJsonFromFile(File file) {
